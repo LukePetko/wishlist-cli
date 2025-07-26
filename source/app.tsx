@@ -1,6 +1,7 @@
 import {Box} from 'ink';
 import useStepStore from './stores/useStepStore.js';
 import Home from './screens/home.js';
+import View from './screens/view.js';
 import Gradient from 'ink-gradient';
 import BigText from 'ink-big-text';
 
@@ -13,6 +14,7 @@ export default function App() {
 				<BigText text="Wishlist CLI" />
 			</Gradient>
 			{currentStep === 'home' && <Home />}
+			{currentStep === 'view' && <View />}
 		</Box>
 	);
 }
