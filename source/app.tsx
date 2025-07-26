@@ -1,7 +1,12 @@
-import React, {useEffect, useState} from 'react';
+import {useEffect, useState} from 'react';
 import {Box, Text} from 'ink';
 import {db} from './drizzle/index.js';
 import useStepStore from './stores/useStepStore.js';
+import type {CurrentStep} from './stores/useStepStore.js';
+import BigText from 'ink-big-text';
+import Gradient from 'ink-gradient';
+import SelectInput from 'ink-select-input';
+import {useShallow} from 'zustand/shallow';
 
 type Props = {
 	name: string | undefined;
@@ -14,7 +19,9 @@ export default function App({name = 'Stranger'}: Props) {
 
 	const [data, setData] = useState('');
 
-	const currentStep = useStepStore(state => state.currentStep);
+	const [currentStep, setStep] = useStepStore(
+		useShallow(state => [state.currentStep, state.setStep]),
+	);
 
 	const fetchData = async () => {
 		setData('Loading...');
@@ -30,35 +37,43 @@ export default function App({name = 'Stranger'}: Props) {
 		console.log('currentStep', currentStep);
 	}, [currentStep]);
 
-	// useInput((input, key) => {
-	// 	if (input === 'q') {
-	// 		exit();
-	// 	}
-	//
-	// 	if (key.leftArrow) {
-	// 		setX(Math.max(1, x - 1));
-	// 	}
-	//
-	// 	if (key.rightArrow) {
-	// 		setX(Math.min(20, x + 1));
-	// 	}
-	//
-	// 	if (key.upArrow) {
-	// 		setY(Math.max(1, y - 1));
-	// 	}
-	//
-	// 	if (key.downArrow) {
-	// 		setY(Math.min(10, y + 1));
-	// 	}
-	// });
+	const handleSelect = ({value}: {label: string; value: string}) => {
+		setStep(value as CurrentStep);
+	};
+
+	const items = [
+		{
+			label: 'View existing items',
+			value: 'view',
+		},
+		{
+			label: 'Edit existing items',
+			value: 'edit',
+		},
+		{
+			label: 'Add new item',
+			value: 'add',
+		},
+		{
+			label: 'Mark item as bought',
+			value: 'mark-bought',
+		},
+	];
 
 	if (currentStep === 'home') {
 		return (
-			<Box flexDirection="column">
+			<Box flexDirection="column" gap={1}>
+				<Gradient name="vice">
+					<BigText text="Wishlist CLI" />
+				</Gradient>
 				<Text>
-					Hello, <Text color="green">{name}</Text>
+					Welcome to the <Text color="cyanBright">Wishlist CLI</Text> add,
+					remove, and view your wishlist items.
 				</Text>
-				<Text>{data}</Text>
+				<Text>
+					Please select an option, you can naviate with the arrow keys:
+				</Text>
+				<SelectInput items={items} onSelect={handleSelect} />
 			</Box>
 		);
 	}

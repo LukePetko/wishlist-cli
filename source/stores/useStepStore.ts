@@ -1,22 +1,26 @@
 import {create} from 'zustand';
 
-type CurrentStep = 'home';
+export type CurrentStep = 'home' | 'view' | 'edit' | 'add' | 'mark-bought';
 
 type StepState = {
 	currentStep: CurrentStep;
+	selectedId?: string | undefined;
 };
 
 type StepActions = {
 	setStep: (currentStep: CurrentStep) => void;
+	setSelectedId: (selectedId: string | undefined) => void;
 };
 
 const initialState: StepState = {
 	currentStep: 'home',
+	selectedId: undefined,
 };
 
 const useStepStore = create<StepState & StepActions>(set => ({
 	...initialState,
 	setStep: (currentStep: CurrentStep) => set({currentStep}),
+	setSelectedId: (selectedId: string | undefined) => set({selectedId}),
 }));
 
 export default useStepStore;
