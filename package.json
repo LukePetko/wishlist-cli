@@ -22,7 +22,8 @@
 		"ink": "^4.1.0",
 		"meow": "^11.0.0",
 		"pg": "^8.16.3",
-		"react": "^18.2.0"
+		"react": "^18.2.0",
+		"zustand": "^5.0.6"
 	},
 	"devDependencies": {
 		"@sindresorhus/tsconfig": "^3.0.1",

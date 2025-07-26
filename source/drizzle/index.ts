@@ -3,12 +3,12 @@ import {Pool} from 'pg';
 import * as schema from './schema.js';
 import dotenv from 'dotenv';
 
-dotenv.config();
+dotenv.config({
+	quiet: true,
+});
 
 const pool = new Pool({
 	connectionString: process.env['DB_URL'],
 });
-
-console.log(process.env['DB_URL']);
 
 export const db = drizzle(pool, {schema});
