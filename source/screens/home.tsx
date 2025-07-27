@@ -1,42 +1,139 @@
-import {Box, Text} from 'ink';
+import {Box, Text, useApp, useInput} from 'ink';
+import Spinner from 'ink-spinner';
+import {useEffect, useState} from 'react';
+import {db} from '../drizzle/index.js';
 import SelectInput from 'ink-select-input';
-import type {CurrentStep} from '../stores/useStepStore.js';
-import useStepStore from '../stores/useStepStore.js';
+import HomeHeader from '../components/home-header.js';
+import {count, eq} from 'drizzle-orm';
+import {wishlistItems} from '../drizzle/schema.js';
 
 const Home = () => {
-	const setStep = useStepStore(state => state.setStep);
+	const [items, setItems] = useState<
+		{
+			label: string;
+			value: string;
+		}[]
+	>();
 
-	const handleSelect = ({value}: {label: string; value: string}) => {
-		setStep(value as CurrentStep);
+	const [numberOfItems, setNumberOfItems] = useState<number | null>(null);
+	const [currentPage, setCurrentPage] = useState<number>(1);
+	const pageSize = 1;
+	const [showIsBought, setShowIsBought] = useState<boolean>(false);
+
+	const {exit} = useApp();
+
+	useInput((input, key) => {
+		switch (input) {
+			case 'q':
+				exit();
+				break;
+			case 'n':
+				setCurrentPage(prevPage =>
+					Math.min(prevPage + 1, Math.ceil(numberOfItems! / pageSize)),
+				);
+				break;
+			case 'p':
+				setCurrentPage(prevPage => Math.max(prevPage - 1, 1));
+				break;
+			case 'b':
+				setShowIsBought(prevShowIsBought => !prevShowIsBought);
+				break;
+			case 'a':
+				break;
+			case 'enter':
+				break;
+			default:
+				break;
+		}
+
+		if (key.leftArrow) {
+			setCurrentPage(prevPage => Math.max(prevPage - 1, 1));
+		}
+		if (key.rightArrow) {
+			setCurrentPage(prevPage =>
+				Math.min(prevPage + 1, Math.ceil(numberOfItems! / pageSize)),
+			);
+		}
+	});
+
+	const fetchItems = async () => {
+		const result = await db
+			.select({value: wishlistItems.id, label: wishlistItems.name})
+			.from(wishlistItems)
+			.where(eq(wishlistItems.isBought, showIsBought))
+			.offset((currentPage - 1) * pageSize)
+			.limit(pageSize)
+			.orderBy(wishlistItems.name);
+
+		setItems(result);
 	};
 
-	const items = [
-		{
-			label: 'View existing items',
-			value: 'view',
-		},
-		{
-			label: 'Edit existing items',
-			value: 'edit',
-		},
-		{
-			label: 'Add new item',
-			value: 'add',
-		},
-		{
-			label: 'Mark item as bought',
-			value: 'mark-bought',
-		},
-	];
+	const fetchNumberOfItems = async () => {
+		const result = await db
+			.select({count: count()})
+			.from(wishlistItems)
+			.where(eq(wishlistItems.isBought, showIsBought));
+		if (!result[0] || !result[0].count) {
+			return;
+		}
+		setNumberOfItems(result[0].count);
+		setCurrentPage(1);
+	};
+
+	useEffect(() => {
+		fetchItems();
+	}, [currentPage, showIsBought]);
+
+	useEffect(() => {
+		fetchNumberOfItems();
+	}, []);
+
+	if (!items) {
+		return (
+			<Box gap={1}>
+				<Spinner />
+				<Text color="cyan">Loading...</Text>
+			</Box>
+		);
+	}
 
 	return (
 		<Box flexDirection="column" gap={1}>
-			<Text>
-				Welcome to the <Text color="cyanBright">Wishlist CLI</Text> add, remove,
-				and view your wishlist items.
-			</Text>
-			<Text>Please select an option, you can naviate with the arrow keys:</Text>
-			<SelectInput items={items} onSelect={handleSelect} />
+			<HomeHeader />
+			{!items.length ? (
+				<Box gap={1}>
+					<Text color="red">No items found</Text>
+				</Box>
+			) : (
+				<Box flexDirection="column" gap={1}>
+					<Text>
+						Showing only items that are{' '}
+						<Text color="cyan" bold>
+							{showIsBought ? 'bought' : 'not bought'}
+						</Text>
+					</Text>
+					<SelectInput items={items} onSelect={console.log} />
+				</Box>
+			)}
+			{numberOfItems && (
+				<Box flexDirection="column">
+					<Text>
+						{numberOfItems} items found. Page {currentPage} of{' '}
+						{Math.ceil(numberOfItems / pageSize)}
+					</Text>
+					<Text>
+						Use{' '}
+						<Text color="cyan" bold>
+							n
+						</Text>{' '}
+						to navigate next and{' '}
+						<Text color="cyan" bold>
+							p
+						</Text>{' '}
+						to navigate to previous page.
+					</Text>
+				</Box>
+			)}
 		</Box>
 	);
 };
