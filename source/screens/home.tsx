@@ -6,6 +6,8 @@ import SelectInput from 'ink-select-input';
 import HomeHeader from '../components/home-header.js';
 import {count, eq} from 'drizzle-orm';
 import {wishlistItems} from '../drizzle/schema.js';
+import useStepStore from '../stores/useStepStore.js';
+import {useShallow} from 'zustand/shallow';
 
 const Home = () => {
 	const [items, setItems] = useState<
@@ -17,10 +19,14 @@ const Home = () => {
 
 	const [numberOfItems, setNumberOfItems] = useState<number | null>(null);
 	const [currentPage, setCurrentPage] = useState<number>(1);
-	const pageSize = 1;
+	const pageSize = 10;
 	const [showIsBought, setShowIsBought] = useState<boolean>(false);
 
 	const {exit} = useApp();
+
+	const [setSelectedId, setStep] = useStepStore(
+		useShallow(state => [state.setSelectedId, state.setStep]),
+	);
 
 	useInput((input, key) => {
 		switch (input) {
@@ -80,13 +86,18 @@ const Home = () => {
 		setCurrentPage(1);
 	};
 
+	const handleSelect = ({value}: {value: string}) => {
+		setSelectedId(value);
+		setStep('detail');
+	};
+
 	useEffect(() => {
 		fetchItems();
 	}, [currentPage, showIsBought]);
 
 	useEffect(() => {
 		fetchNumberOfItems();
-	}, []);
+	}, [showIsBought]);
 
 	if (!items) {
 		return (
@@ -112,7 +123,7 @@ const Home = () => {
 							{showIsBought ? 'bought' : 'not bought'}
 						</Text>
 					</Text>
-					<SelectInput items={items} onSelect={console.log} />
+					<SelectInput items={items} onSelect={handleSelect} />
 				</Box>
 			)}
 			{numberOfItems && (

@@ -1,6 +1,6 @@
 import {create} from 'zustand';
 
-export type CurrentStep = 'home' | 'edit' | 'add';
+export type CurrentStep = 'home' | 'detail' | 'edit' | 'add';
 
 type StepState = {
 	currentStep: CurrentStep;
