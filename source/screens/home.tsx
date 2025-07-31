@@ -45,6 +45,7 @@ const Home = () => {
 				setShowIsBought(prevShowIsBought => !prevShowIsBought);
 				break;
 			case 'a':
+				setStep('add');
 				break;
 			case 'enter':
 				break;
