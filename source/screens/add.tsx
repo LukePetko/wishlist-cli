@@ -2,6 +2,8 @@ import {Box, Text, useInput} from 'ink';
 import {useEffect, useState} from 'react';
 import TextInput from '../components/text-input.js';
 import getAllStores from '../utils/getAllStores.js';
+import {v4 as uuidv4} from 'uuid';
+import ShopModal from '../components/shop-modal.js';
 
 type Field =
 	| 'unselected'
@@ -13,7 +15,11 @@ type Field =
 	| `link_shop_${number}`
 	| `link_delete_${number}`;
 
-type SelectableField = Exclude<Field, 'unselected'> | 'add_link';
+type SelectableField =
+	| Exclude<Field, 'unselected'>
+	| 'add_link'
+	| `link_delete_${number}`
+	| 'save';
 
 type NewItem = {
 	name: string;
@@ -21,9 +27,13 @@ type NewItem = {
 	image: string;
 
 	links: {
+		uuid: string;
 		url: string;
 		price: number;
-		shop: string;
+		shop: {
+			name: string;
+			id: string;
+		};
 	}[];
 };
 
@@ -37,6 +47,7 @@ const Add = () => {
 		'description',
 		'image',
 		'add_link',
+		'save',
 	]);
 
 	const [newItem, setNewItem] = useState<NewItem>({
@@ -46,10 +57,12 @@ const Add = () => {
 		links: [],
 	});
 
-	const [stores, setStores] = useState<string[]>([]);
+	const [stores, setStores] = useState<{name: string; id: string}[]>([]);
+
+	const [shopIdInternal, setShopIdInternal] = useState<string | null>(null);
 
 	useInput((input, key) => {
-		if (selectedField !== 'unselected') return;
+		if (selectedField !== 'unselected' || shopIdInternal) return;
 		const hoveredIndex = allFields.indexOf(hoveredField);
 
 		if (input === 'j') {
@@ -63,7 +76,10 @@ const Add = () => {
 		if (
 			key.return &&
 			hoveredField.startsWith('link') &&
-			hoveredField !== 'add_link'
+			hoveredField !== 'add_link' &&
+			hoveredField !== 'save' &&
+			!hoveredField.startsWith('link_delete') &&
+			!hoveredField.startsWith('link_shop')
 		) {
 			setSelectedField(hoveredField);
 			const [_, field, linkIndex] = hoveredField.split('_');
@@ -74,7 +90,7 @@ const Add = () => {
 
 			if (!link) return;
 
-			setTempValue(String(link[field as 'url' | 'price' | 'shop']));
+			setTempValue(String(link[field as 'url' | 'price']));
 		} else if (
 			key.return &&
 			(hoveredField === 'name' ||
@@ -90,19 +106,51 @@ const Add = () => {
 				links: [
 					...prev.links,
 					{
+						uuid: uuidv4(),
 						url: '',
 						price: 0,
-						shop: '',
+						shop: {name: '', id: ''},
 					},
 				],
 			}));
 
 			setAllFields(prev => [
-				...prev,
+				...prev.slice(0, prev.length - 1),
 				`link_url_${numberOfLinks}`,
 				`link_price_${numberOfLinks}`,
 				`link_shop_${numberOfLinks}`,
+				`link_delete_${numberOfLinks}`,
+				`save`,
 			]);
+		} else if (key.return && hoveredField.startsWith('link_shop')) {
+			const linkIndex = hoveredField.split('_')[2];
+			if (linkIndex === undefined) return;
+
+			setShopIdInternal(newItem.links[+linkIndex]?.uuid || null);
+		} else if (key.return && hoveredField.startsWith('link_delete')) {
+			const linkIndex = hoveredField.split('_')[2];
+
+			if (linkIndex === undefined) return;
+
+			const lastIndex = newItem.links.length - 1;
+
+			setNewItem(prev => ({
+				...prev,
+				links: prev.links.filter((_, index) => index !== +linkIndex),
+			}));
+
+			setAllFields(prev => {
+				return prev.filter(
+					item =>
+						item !== `link_delete_${lastIndex}` &&
+						item !== `link_url_${lastIndex}` &&
+						item !== `link_price_${lastIndex}` &&
+						item !== `link_shop_${lastIndex}`,
+				);
+			});
+
+			setHoveredField('add_link');
+			setSelectedField('unselected');
 		}
 	});
 
@@ -111,13 +159,13 @@ const Add = () => {
 
 		if (selectedField.startsWith('link')) {
 			const [_, fieldRaw, linkIndexRaw] = selectedField.split('_');
-			const field = fieldRaw as 'url' | 'price' | 'shop' | undefined;
+			const field = fieldRaw as 'url' | 'price' | undefined;
 			const linkIndex = linkIndexRaw ? +linkIndexRaw : undefined;
 
 			if (
 				linkIndex === undefined ||
 				field === undefined ||
-				(field !== 'url' && field !== 'price' && field !== 'shop')
+				(field !== 'url' && field !== 'price')
 			)
 				return;
 
@@ -145,7 +193,6 @@ const Add = () => {
 
 	const fetchStores = async () => {
 		const result = await getAllStores();
-		console.log(result);
 		setStores(result);
 	};
 
@@ -154,84 +201,139 @@ const Add = () => {
 	}, []);
 
 	return (
-		<Box flexDirection="column">
-			<Text color="cyan" bold>
-				ITEM INFO
-			</Text>
-			<TextInput
-				onChange={setTempValue}
-				onSubmit={handleSubmit}
-				hoveredField={hoveredField}
-				selectedField={selectedField}
-				fieldName="name"
-				fieldTitle="Name"
-			/>
-			<TextInput
-				onChange={setTempValue}
-				onSubmit={handleSubmit}
-				hoveredField={hoveredField}
-				selectedField={selectedField}
-				fieldName="description"
-				fieldTitle="Description"
-			/>
-			<TextInput
-				onChange={setTempValue}
-				onSubmit={handleSubmit}
-				hoveredField={hoveredField}
-				selectedField={selectedField}
-				fieldName="image"
-				fieldTitle="Image"
-			/>
-			<Box flexDirection="row" gap={1} marginY={1}>
-				{hoveredField === 'add_link' ? (
-					<Text color="cyan">❯</Text>
-				) : (
-					<Text color="cyan"> </Text>
-				)}
-				<Text color="cyan" bold={hoveredField === 'add_link'}>
-					Add Link
-				</Text>
-			</Box>
-
-			{newItem.links.length ? (
+		<>
+			<Box flexDirection="column">
 				<Text color="cyan" bold>
-					STORES
+					ITEM INFO
 				</Text>
-			) : null}
-			{newItem.links.map((_, index) => (
-				<Box flexDirection="column" key={index}>
-					<TextInput
-						onChange={setTempValue}
-						onSubmit={handleSubmit}
-						hoveredField={hoveredField}
-						selectedField={selectedField}
-						fieldName={`link_url_${index}`}
-						fieldTitle="Link Url"
-						fieldPlaceholder="test"
-					/>
-					<TextInput
-						onChange={setTempValue}
-						onSubmit={handleSubmit}
-						hoveredField={hoveredField}
-						selectedField={selectedField}
-						fieldName={`link_price_${index}`}
-						fieldTitle="Price"
-						fieldPlaceholder="test"
-					/>
-					<TextInput
-						onChange={setTempValue}
-						onSubmit={handleSubmit}
-						hoveredField={hoveredField}
-						selectedField={selectedField}
-						fieldName={`link_shop_${index}`}
-						fieldTitle="Shop"
-						fieldPlaceholder="test"
-						fieldSuggestions={stores}
-					/>
+				<TextInput
+					onChange={setTempValue}
+					onSubmit={handleSubmit}
+					hoveredField={hoveredField}
+					selectedField={selectedField}
+					fieldName="name"
+					fieldTitle="Name"
+				/>
+				<TextInput
+					onChange={setTempValue}
+					onSubmit={handleSubmit}
+					hoveredField={hoveredField}
+					selectedField={selectedField}
+					fieldName="description"
+					fieldTitle="Description"
+				/>
+				<TextInput
+					onChange={setTempValue}
+					onSubmit={handleSubmit}
+					hoveredField={hoveredField}
+					selectedField={selectedField}
+					fieldName="image"
+					fieldTitle="Image"
+				/>
+				<Box flexDirection="row" gap={1} marginY={1}>
+					{hoveredField === 'add_link' ? (
+						<Text color="cyan">❯</Text>
+					) : (
+						<Text color="cyan"> </Text>
+					)}
+					<Text color="cyan" bold={hoveredField === 'add_link'}>
+						Add Link
+					</Text>
 				</Box>
-			))}
-			<Text>{JSON.stringify(newItem, null, 2)}</Text>
-		</Box>
+
+				{newItem.links.length ? (
+					<Text color="cyan" bold>
+						STORES
+					</Text>
+				) : null}
+				{newItem.links.map(({uuid}, index) => (
+					<Box flexDirection="column" key={uuid} paddingTop={1}>
+						<Text color="cyan" bold>
+							Link {index + 1}
+						</Text>
+						<TextInput
+							onChange={setTempValue}
+							onSubmit={handleSubmit}
+							hoveredField={hoveredField}
+							selectedField={selectedField}
+							fieldName={`link_url_${index}`}
+							fieldTitle="Link Url"
+							fieldPlaceholder="test"
+						/>
+						<TextInput
+							onChange={setTempValue}
+							onSubmit={handleSubmit}
+							hoveredField={hoveredField}
+							selectedField={selectedField}
+							fieldName={`link_price_${index}`}
+							fieldTitle="Price"
+							fieldPlaceholder="test"
+						/>
+						<Box flexDirection="row" gap={1}>
+							{hoveredField === `link_shop_${index}` ? (
+								<Text color="cyan">❯</Text>
+							) : (
+								<Text color="cyan"> </Text>
+							)}
+							<Text color="cyan" bold={hoveredField === `link_shop_${index}`}>
+								Select Shop:
+							</Text>
+							<Text color="cyan" bold={hoveredField === `link_shop_${index}`}>
+								{newItem.links[index]?.shop.name || ''}
+							</Text>
+						</Box>
+						<Box flexDirection="row" gap={1}>
+							{hoveredField === `link_delete_${index}` ? (
+								<Text color="cyan">❯</Text>
+							) : (
+								<Text color="cyan"> </Text>
+							)}
+							<Text color="cyan" bold={hoveredField === `link_delete_${index}`}>
+								Remove Link
+							</Text>
+						</Box>
+					</Box>
+				))}
+				<Box flexDirection="row" gap={1} marginY={1}>
+					{hoveredField === 'save' ? (
+						<Text color="cyan">❯</Text>
+					) : (
+						<Text color="cyan"> </Text>
+					)}
+					<Text color="cyan" bold>
+						Save
+					</Text>
+				</Box>
+				<Text>{JSON.stringify(newItem, null, 2)}</Text>
+			</Box>
+			<ShopModal
+				shopIdInternal={shopIdInternal}
+				onClose={({value, label}) => {
+					const links = newItem.links.map(link => {
+						if (link.uuid === shopIdInternal) {
+							return {
+								...link,
+								shop: {
+									name: label,
+									id: value,
+								},
+							};
+						}
+						return link;
+					});
+
+					setNewItem(prev => ({
+						...prev,
+						links,
+					}));
+					setShopIdInternal(null);
+				}}
+				shops={stores.map(store => ({
+					value: store.id,
+					label: store.name,
+				}))}
+			/>
+		</>
 	);
 };
 
