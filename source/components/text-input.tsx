@@ -10,6 +10,7 @@ type TextInputProps = {
 	fieldName: string;
 	fieldTitle: string;
 	fieldPlaceholder?: string;
+	fieldSuggestions?: string[];
 };
 
 const TextInput: FC<TextInputProps> = ({
@@ -20,6 +21,7 @@ const TextInput: FC<TextInputProps> = ({
 	fieldName,
 	fieldTitle,
 	fieldPlaceholder,
+	fieldSuggestions,
 }) => {
 	return (
 		<Box flexDirection="row" gap={1}>
@@ -36,6 +38,7 @@ const TextInput: FC<TextInputProps> = ({
 				placeholder={fieldPlaceholder}
 				onChange={onChange}
 				onSubmit={onSubmit}
+				suggestions={fieldSuggestions}
 			/>
 		</Box>
 	);

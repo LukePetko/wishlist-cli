@@ -1,6 +1,7 @@
 import {Box, Text, useInput} from 'ink';
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
 import TextInput from '../components/text-input.js';
+import getAllStores from '../utils/getAllStores.js';
 
 type Field =
 	| 'unselected'
@@ -45,6 +46,8 @@ const Add = () => {
 		links: [],
 	});
 
+	const [stores, setStores] = useState<string[]>([]);
+
 	useInput((input, key) => {
 		if (selectedField !== 'unselected') return;
 		const hoveredIndex = allFields.indexOf(hoveredField);
@@ -71,7 +74,7 @@ const Add = () => {
 
 			if (!link) return;
 
-			setTempValue(String(link[field as 'url' | 'price']));
+			setTempValue(String(link[field as 'url' | 'price' | 'shop']));
 		} else if (
 			key.return &&
 			(hoveredField === 'name' ||
@@ -98,6 +101,7 @@ const Add = () => {
 				...prev,
 				`link_url_${numberOfLinks}`,
 				`link_price_${numberOfLinks}`,
+				`link_shop_${numberOfLinks}`,
 			]);
 		}
 	});
@@ -107,13 +111,13 @@ const Add = () => {
 
 		if (selectedField.startsWith('link')) {
 			const [_, fieldRaw, linkIndexRaw] = selectedField.split('_');
-			const field = fieldRaw as 'url' | 'price' | undefined;
+			const field = fieldRaw as 'url' | 'price' | 'shop' | undefined;
 			const linkIndex = linkIndexRaw ? +linkIndexRaw : undefined;
 
 			if (
 				linkIndex === undefined ||
 				field === undefined ||
-				(field !== 'url' && field !== 'price')
+				(field !== 'url' && field !== 'price' && field !== 'shop')
 			)
 				return;
 
@@ -138,6 +142,16 @@ const Add = () => {
 		}
 		setTempValue('');
 	};
+
+	const fetchStores = async () => {
+		const result = await getAllStores();
+		console.log(result);
+		setStores(result);
+	};
+
+	useEffect(() => {
+		fetchStores();
+	}, []);
 
 	return (
 		<Box flexDirection="column">
@@ -203,6 +217,16 @@ const Add = () => {
 						fieldName={`link_price_${index}`}
 						fieldTitle="Price"
 						fieldPlaceholder="test"
+					/>
+					<TextInput
+						onChange={setTempValue}
+						onSubmit={handleSubmit}
+						hoveredField={hoveredField}
+						selectedField={selectedField}
+						fieldName={`link_shop_${index}`}
+						fieldTitle="Shop"
+						fieldPlaceholder="test"
+						fieldSuggestions={stores}
 					/>
 				</Box>
 			))}

@@ -1,0 +1,25 @@
+{
+	"name": "test recipe",
+	"description": "recipe description",
+	"portions": 4,
+	"prep_time": 600,
+	"cook_time": 600,
+	"thumbnail": "base64 encoded image",
+	"ingredients": [
+		{
+			"name": "ingredient name",
+			"weight": 100,
+			"unit": "g"
+		},
+		{
+			"name": "ingredient 2",
+			"weight": 200,
+			"unit": "g"
+		}
+	],
+	"steps": [
+		{
+			"..."
+		}
+	]
+}
