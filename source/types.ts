@@ -7,3 +7,19 @@ export type WishlistLink = typeof wishlistLinks.$inferSelect & {
 export type WishlistItem = typeof wishlistItems.$inferSelect & {
 	wishlistLinks: WishlistLink[];
 };
+
+export type NewItem = {
+	name: string;
+	description: string;
+	image: string;
+
+	links: {
+		uuid: string;
+		url: string;
+		price: number;
+		shop: {
+			name: string;
+			id: string;
+		};
+	}[];
+};

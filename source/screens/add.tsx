@@ -4,6 +4,9 @@ import TextInput from '../components/text-input.js';
 import getAllStores from '../utils/getAllStores.js';
 import {v4 as uuidv4} from 'uuid';
 import ShopModal from '../components/shop-modal.js';
+import {NewItem} from '../types.js';
+import insertItem from '../utils/insertItem.js';
+import useStepStore from '../stores/useStepStore.js';
 
 type Field =
 	| 'unselected'
@@ -21,23 +24,9 @@ type SelectableField =
 	| `link_delete_${number}`
 	| 'save';
 
-type NewItem = {
-	name: string;
-	description: string;
-	image: string;
-
-	links: {
-		uuid: string;
-		url: string;
-		price: number;
-		shop: {
-			name: string;
-			id: string;
-		};
-	}[];
-};
-
 const Add = () => {
+	const setStep = useStepStore(state => state.setStep);
+
 	const [selectedField, setSelectedField] = useState<Field>('unselected');
 	const [hoveredField, setHoveredField] = useState<SelectableField>('name');
 	const [tempValue, setTempValue] = useState<string>('');
@@ -61,7 +50,7 @@ const Add = () => {
 
 	const [shopIdInternal, setShopIdInternal] = useState<string | null>(null);
 
-	useInput((input, key) => {
+	useInput(async (input, key) => {
 		if (selectedField !== 'unselected' || shopIdInternal) return;
 		const hoveredIndex = allFields.indexOf(hoveredField);
 
@@ -151,6 +140,11 @@ const Add = () => {
 
 			setHoveredField('add_link');
 			setSelectedField('unselected');
+		} else if (key.return && hoveredField === 'save') {
+			const success = await insertItem(newItem);
+			if (success) {
+				setStep('home');
+			}
 		}
 	});
 
@@ -278,9 +272,7 @@ const Add = () => {
 							<Text color="cyan" bold={hoveredField === `link_shop_${index}`}>
 								Select Shop:
 							</Text>
-							<Text color="cyan" bold={hoveredField === `link_shop_${index}`}>
-								{newItem.links[index]?.shop.name || ''}
-							</Text>
+							<Text>{newItem.links[index]?.shop.name || ''}</Text>
 						</Box>
 						<Box flexDirection="row" gap={1}>
 							{hoveredField === `link_delete_${index}` ? (
@@ -304,7 +296,6 @@ const Add = () => {
 						Save
 					</Text>
 				</Box>
-				<Text>{JSON.stringify(newItem, null, 2)}</Text>
 			</Box>
 			<ShopModal
 				shopIdInternal={shopIdInternal}
