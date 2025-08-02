@@ -2,12 +2,17 @@ import {db} from '../drizzle/index.js';
 import {wishlistItems, wishlistLinks} from '../drizzle/schema.js';
 import type {NewItem} from '../types.js';
 import {v4 as uuidv4} from 'uuid';
+import insertIntoStorage from './insert-into-storage.js';
 
 const insertItem = async (item: NewItem) => {
+	const image = await insertIntoStorage('items', item.image);
+
+	if (!image) return false;
+
 	const newItem = {
 		name: item.name,
 		description: item.description,
-		image: item.image,
+		image,
 		isBought: false,
 		createdAt: new Date().toISOString(),
 		updatedAt: new Date().toISOString(),
