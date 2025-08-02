@@ -13,6 +13,7 @@ type Field =
 	| 'name'
 	| 'description'
 	| 'image'
+	| 'is_bought'
 	| `link_url_${number}`
 	| `link_price_${number}`
 	| `link_shop_${number}`
@@ -35,6 +36,7 @@ const Add = () => {
 		'name',
 		'description',
 		'image',
+		'is_bought',
 		'add_link',
 		'save',
 	]);
@@ -43,6 +45,7 @@ const Add = () => {
 		name: '',
 		description: '',
 		image: '',
+		is_bought: 'n',
 		links: [],
 	});
 
@@ -84,7 +87,8 @@ const Add = () => {
 			key.return &&
 			(hoveredField === 'name' ||
 				hoveredField === 'description' ||
-				hoveredField === 'image')
+				hoveredField === 'image' ||
+				hoveredField === 'is_bought')
 		) {
 			setSelectedField(hoveredField);
 			setTempValue(newItem[hoveredField]);
@@ -141,8 +145,10 @@ const Add = () => {
 			setHoveredField('add_link');
 			setSelectedField('unselected');
 		} else if (key.return && hoveredField === 'save') {
-			const success = await insertItem(newItem);
-			if (success) {
+			const result = await insertItem(newItem);
+			if (typeof result === 'string') {
+				console.log(result);
+			} else {
 				setStep('home');
 			}
 		}
@@ -223,6 +229,14 @@ const Add = () => {
 					selectedField={selectedField}
 					fieldName="image"
 					fieldTitle="Image"
+				/>
+				<TextInput
+					onChange={setTempValue}
+					onSubmit={handleSubmit}
+					hoveredField={hoveredField}
+					selectedField={selectedField}
+					fieldName="is_bought"
+					fieldTitle="Is Bought"
 				/>
 				<Box flexDirection="row" gap={1} marginY={1}>
 					{hoveredField === 'add_link' ? (

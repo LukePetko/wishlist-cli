@@ -7,6 +7,7 @@ import {eq} from 'drizzle-orm';
 import {useEffect, useState} from 'react';
 import {WishlistItem} from '../types.js';
 import Spinner from 'ink-spinner';
+import deleteItem from '../utils/delete-item.js';
 
 const Detail = () => {
 	const [selectedId, setSelectedId, setStep] = useStepStore(
@@ -40,7 +41,7 @@ const Detail = () => {
 		fetchItem();
 	}, [selectedId]);
 
-	useInput(input => {
+	useInput(async input => {
 		switch (input) {
 			case 'q':
 				exit();
@@ -48,6 +49,13 @@ const Detail = () => {
 			case 'b':
 				setStep('home');
 				setSelectedId(undefined);
+				break;
+			case 'd':
+				const result = await deleteItem(selectedId);
+				if (result) {
+					setStep('home');
+					setSelectedId(undefined);
+				}
 				break;
 			default:
 				break;
@@ -64,11 +72,21 @@ const Detail = () => {
 
 	return (
 		<Box flexDirection="column" gap={2} marginLeft={1}>
-			<Text bold color="cyan">
-				{itemDetail.name}
-			</Text>
-
+			<Box flexDirection="column" borderStyle="round">
+				<Text bold color="cyan">
+					Selected item
+				</Text>
+				<Text>
+					Press <Text color="cyan">d</Text> to delete the item
+				</Text>
+				<Text>
+					Press <Text color="cyan">q</Text> to quit
+				</Text>
+			</Box>
 			<Box flexDirection="column" gap={1}>
+				<Text bold color="cyan">
+					{itemDetail.name}
+				</Text>
 				<Text>
 					<Text color="cyan" bold>
 						Description:{' '}

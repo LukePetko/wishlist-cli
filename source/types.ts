@@ -12,6 +12,7 @@ export type NewItem = {
 	name: string;
 	description: string;
 	image: string;
+	is_bought: 'y' | 'n';
 
 	links: {
 		uuid: string;

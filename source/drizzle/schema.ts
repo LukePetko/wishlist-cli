@@ -45,7 +45,7 @@ export const wishlistLinks = pgTable(
 			columns: [table.itemId],
 			foreignColumns: [wishlistItems.id],
 			name: 'fk_wishlist_links_item_id',
-		}),
+		}).onDelete('cascade'),
 		foreignKey({
 			columns: [table.storeId],
 			foreignColumns: [stores.id],
