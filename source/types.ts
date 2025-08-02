@@ -24,3 +24,8 @@ export type NewItem = {
 		};
 	}[];
 };
+
+export type NewStore = {
+	name: string;
+	icon: string;
+};

@@ -5,6 +5,7 @@ import Gradient from 'ink-gradient';
 import BigText from 'ink-big-text';
 import Detail from './screens/detail.js';
 import Add from './screens/add.js';
+import AddStore from './screens/add-store.js';
 
 export default function App() {
 	const currentStep = useStepStore(state => state.currentStep);
@@ -17,6 +18,7 @@ export default function App() {
 			{currentStep === 'home' && <Home />}
 			{currentStep === 'detail' && <Detail />}
 			{currentStep === 'add' && <Add />}
+			{currentStep === 'add-store' && <AddStore />}
 		</Box>
 	);
 }

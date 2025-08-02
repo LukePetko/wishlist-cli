@@ -4,24 +4,17 @@ import type {NewItem} from '../types.js';
 import {v4 as uuidv4} from 'uuid';
 import insertIntoStorage from './insert-into-storage.js';
 
-const getMissingFieldMessage = (newItem: NewItem) => {
-	let message = 'Following fields are missing: ';
-	if (!newItem.name) message += 'name, ';
-	if (!newItem.description) message += 'description, ';
-	if (!newItem.image) message += 'image, ';
-	if (!newItem.links.length) message += 'links, ';
-	message = message.slice(0, -2);
-
-	return message + '.';
-};
-
 const insertItem = async (item: NewItem) => {
-	if (!item.name || !item.description || !item.image || !item.links.length)
-		return getMissingFieldMessage(item);
+	if (!item.name) return 'Missing name.';
 
-	const image = await insertIntoStorage('items', item.image);
+	let image = null;
+	if (item.image !== '') {
+		const result = await insertIntoStorage('items', item.image);
 
-	if (!image) return 'Error saving image. Please check the path.';
+		if (!result) return 'Error saving image. Please check the path.';
+
+		image = result;
+	}
 
 	const newItem = {
 		name: item.name,

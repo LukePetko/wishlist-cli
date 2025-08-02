@@ -47,6 +47,9 @@ const Home = () => {
 			case 'a':
 				setStep('add');
 				break;
+			case 's':
+				setStep('add-store');
+				break;
 			case 'enter':
 				break;
 			default:
